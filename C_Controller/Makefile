@@ -56,7 +56,7 @@ CFlags += -MMD -MP
 
 %.o: %.c Makefile
 	@echo CC $<
-	@$(CC) $(CFlags) $< -o $@ -c
+	$(CC) $(CFlags) $< -o $@ -c
 
 %.o: %.s Makefile
 	@$(CC) $(CFlags) $< -o $@ -c -x assembler-with-cpp
@@ -68,6 +68,8 @@ CFlags += -MMD -MP
 
 ###############################################################################
 # Target-specific definitions
+
+CFlags += -Ilowlevel
 
 LowLevel_Sources =
 LowLevel_Objects =
