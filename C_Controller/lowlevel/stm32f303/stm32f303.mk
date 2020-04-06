@@ -24,12 +24,13 @@ CFlags += \
 
 LFlags += \
 	-Wl,--gc-sections \
-	-nostartfiles \
 	-lm \
 	-lstdc++_nano \
 	-lc \
 	-lg \
-	-lrdimon
+
+	# -lrdimon
+	# -nostartfiles \
 
 
 # MCU specific flags (stm32f303)
@@ -38,52 +39,51 @@ CFlags += \
 	-mthumb \
 	-mfloat-abi=hard \
 	-mfpu=fpv4-sp-d16 \
-	-specs=nano.specs
+	-specs=nosys.specs
 
 
 ##############################################################################
 # Use ST's HAL
-HAL_Drivers_Dir = $(Makefile_path)/HAL/Drivers
+HAL_Dir = $(Makefile_path)/HAL
 
 CFlags += \
 	-DUSE_HAL_DRIVER \
 	-DSTM32F303xE \
-	-I$(HAL_Drivers_Dir)/CMSIS/Device/ST/STM32F3xx/Include \
-	-I$(HAL_Drivers_Dir)/CMSIS/Include \
-	-I$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Inc \
+	-I$(HAL_Dir) \
+	-I$(HAL_Dir)/Drivers/CMSIS/Device/ST/STM32F3xx/Include \
+	-I$(HAL_Dir)/Drivers/CMSIS/Include \
+	-I$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Inc \
 
 LowLevel_Sources += \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_cortex.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dma.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_exti.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash_ex.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_gpio.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c_ex.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr_ex.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc_ex.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim_ex.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart_ex.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart.c \
-	$(HAL_Drivers_Dir)/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.c
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_cortex.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dma.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_exti.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash_ex.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_gpio.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c_ex.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr_ex.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc_ex.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim_ex.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart_ex.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart.c \
+	$(HAL_Dir)/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.c \
+	$(HAL_Dir)/stm32f3xx_nucleo.c \
+	$(HAL_Dir)/syscalls.c \
+	$(HAL_Dir)/sysmem.c \
+	$(HAL_Dir)/system_stm32f3xx.c \
+	$(Makefile_path)/stm32f3xx_hal_msp.c
 
 LowLevel_Objects += \
-	$(HAL_Drivers_Dir)/startup_stm32f303retx.o
+	$(HAL_Dir)/Drivers/startup_stm32f303retx.o
 
-# That's a bit crappy, but that's the best to not contaminate the top-level
-%.o: %.s
-	@$(CC) $(CFlags)  $< -o $@ -c -x assembler-with-cpp
+LowLevel_Sources += \
+	$(Makefile_path)/hardware_simulation.c
 
-
-
-
-%.o: %.c Makefile
-	@$(CC) $(CFlags) $< -o $@ -c
-	@echo CC $<
 
 # Use LibOpenCm3
 # LIBOPENCM3_DIR = $(Makefile_path)/hal_common/libopencm3
@@ -96,8 +96,8 @@ LowLevel_Objects += \
 # Openocd configuration
 # OPENOCD_CFG = /usr/share/openocd/scripts/board/st_nucleo_f3.cfg
 
-# LINKER_SCRIPTS_DIR = $(Makefile_path)/hal_common/linker_scripts
-# LFlags += -T $(LINKER_SCRIPTS_DIR)/stm32f303.ld
+LINKER_SCRIPTS_DIR = $(HAL_Dir)/
+LFlags += -T $(LINKER_SCRIPTS_DIR)/stm32f303retx.ld
 
 
 

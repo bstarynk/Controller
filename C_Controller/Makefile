@@ -27,7 +27,11 @@ CXXFlags =
 LFlags =
 
 # Warning levels
-CFlags += -Wall -Wextra #-werror
+CFlags += \
+	-Wall \
+	-Wextra \
+	-Wno-unused-parameter \
+	#-werror
 
 # Generic flags
 CFlags += \
@@ -53,6 +57,9 @@ CFlags += -MMD -MP
 %.o: %.c Makefile
 	@echo CC $<
 	@$(CC) $(CFlags) $< -o $@ -c
+
+%.o: %.s Makefile
+	@$(CC) $(CFlags) $< -o $@ -c -x assembler-with-cpp
 
 %.elf:
 	@echo LINK $@
