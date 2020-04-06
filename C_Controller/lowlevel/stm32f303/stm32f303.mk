@@ -9,6 +9,7 @@ CC = $(Toolchain)gcc
 CXX= $(Toolchain)g++
 LD = $(Toolchain)ld
 GDB= $(Toolchain)gdb
+AS= $(Toolchain)as
 
 ifeq (, $(shell which ccache))
 else
