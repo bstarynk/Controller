@@ -1,10 +1,7 @@
-
-
 SET(CMAKE_SYSTEM_NAME Generic)
 SET(CMAKE_SYSTEM_VERSION 1)
 cmake_minimum_required(VERSION 3.7)
 project(C_Controller)
-
 
 if(NOT TARGET)
     set(TARGET stm32f303)
@@ -13,9 +10,9 @@ endif()
 SET(LOWLEVEL_INC_DIR ${CMAKE_SOURCE_DIR}/lowlevel/include)
 SET(LOWLEVEL_SRC_DIR ${CMAKE_SOURCE_DIR}/lowlevel/${TARGET})
 if(${TARGET} STREQUAL "stm32f303")
-	SET(EXECUTABLE ${PROJECT_NAME}.${TARGET}.elf)
+    SET(EXECUTABLE ${PROJECT_NAME}.${TARGET}.elf)
 else()
-	SET(EXECUTABLE simulateur)
+    SET(EXECUTABLE simulateur)
 endif()
 SET(SOURCES platform.h
     main.c
@@ -29,7 +26,7 @@ SET(SOURCES platform.h
     ihm_communication.h
     ihm_communication.c
     ${LOWLEVEL_INC_DIR}/hardware_simulation.h
-	${LOWLEVEL_SRC_DIR}/hardware_simulation.c
+    ${LOWLEVEL_SRC_DIR}/hardware_simulation.c
     unit_tests.h
     unit_tests.c)
 
