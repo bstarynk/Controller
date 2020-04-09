@@ -1,7 +1,6 @@
 #include <math.h>
 
 #include "controller.h"
-#include "controller_settings.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,47 +8,43 @@
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
 
 #include "ihm_communication.h"
-
 #include "hardware_simulation.h"
-
-int FR_pm      =  18;
-int VT_mL      = 300;
-int PEP_cmH2O  =   5;
-int Vmax_Lpm   =  60;
-long Tplat_ms   = 400;
-
-int Pmax_cmH2O =  60;
-int Pmin_cmH2O =  20;
-int VTmin_mL   = 400;
-int FRmin_pm   =  10;
-int VMmin_Lm   =   5;
-
-long Tpins_ms   =   0;
-long Tpexp_ms   =   0;
-long Tpbip_ms   =   0;
-
-const int PEPmax_cmH2O = 2;
-const int PEPmin_cmH2O = 2;
 
 // INIT
 
-char init_str[81] = "";
+#define INIT_STR_SIZE 80
+char init_str[INIT_STR_SIZE+1] = ""; // leaving space for off by 1 errors in code
+
+const char *get_init_str() { return init_str; }
 
 // DATA
 
-float VolM_Lpm = 0.;
-float P_cmH2O  = 0.;
-float Vol_mL   = 0.;
+float VolM_Lpm = 0.f;
+float P_cmH2O  = 0.f;
+float Vol_mL   = 0.f;
 
 // RESP
 
-float IE           = 0.;
-float FRs_pm       = 0.;
-float VTe_mL       = 0.;
-float VM_Lm        = 0.;
-float Pcrete_cmH2O = 0.;
-float Pplat_cmH2O  = 0.;
-float PEPs_cmH2O   = 0.;
+float EoI_ratio    = 0.f;
+float FR_pm        = 0.f;
+float VTe_mL       = 0.f;
+float VM_Lpm       = 0.f;
+float Pcrete_cmH2O = 0.f;
+float Pplat_cmH2O  = 0.f;
+float PEP_cmH2O    = 0.f;
+
+long Tpins_ms = -1.f;
+long Tpexp_ms = -1.f;
+
+bool pause_insp(int t_ms)
+{
+    Tpins_ms = get_time_ms()+t_ms;
+}
+
+bool pause_exp(int t_ms)
+{
+    Tpexp_ms = get_time_ms()+t_ms;
+}
 
 void check(int* bits, int bit, bool success)
 {
@@ -128,6 +123,9 @@ int self_tests()
     check(&test_bits,  9, light_yellow(On )); wait_ms(100);
     check(&test_bits, 10, light_yellow(Off)); // start pos
 
+    snprintf(init_str, INIT_STR_SIZE, "Start simulation self-tests:%o", test_bits);
+    send_INIT(init_str);
+
     return test_bits;
 }
 
@@ -143,7 +141,7 @@ void sense_and_compute()
 
     Pplat_cmH2O = PEP_cmH2O = P_cmH2O; // TODO Compute average
 
-    if ((sent_DATA_ms+50 < get_time_ms())
+    if ((sent_DATA_ms+50 < get_time_ms()) // @ 20Hz
         && send_DATA(P_cmH2O, VolM_Lpm, Vol_mL, Pplat_cmH2O, PEP_cmH2O)) {
         sent_DATA_ms = get_time_ms();
     }
@@ -157,38 +155,39 @@ long state_start_ms = -1;
 
 enum State enter_state(enum State new)
 {
+    const float Pmax_cmH2O = get_setting_Pmax_cmH2O();
+    const float Pmin_cmH2O = get_setting_Pmin_cmH2O();
+    const int period_ms = 60 * 1000 / FR_pm;
+    const float end_insufflation = 0.5f - ((float)get_setting_Tplat_ms() / period_ms);
+    const float cycle_pos = (float)(get_time_ms() % period_ms) / period_ms; // 0 cycle start => 1 cycle end
 
-    static int sent_RESP_ms = 0;
-    int period_ms = 60 * 1000 / FR_pm;
-    float end_insufflation = 0.5f - ((float)Tplat_ms / period_ms);
-    float cycle_pos = (float)(get_time_ms() % period_ms) / period_ms; // 0 cycle start => 1 cycle end
-    if (cycle_pos < end_insufflation)
-    {
+    if (cycle_pos < end_insufflation) {
         float insufflation_pos = cycle_pos / end_insufflation; // 0 start insufflation => 1 end insufflation
         P_cmH2O = (int)(Pmin_cmH2O + sqrtf(insufflation_pos) * (Pmax_cmH2O - Pmin_cmH2O));
     }
-    else if (cycle_pos < 0.5) // Plateau
-    {
+    else if (cycle_pos < 0.5) { // Plateau
         P_cmH2O = (int)(0.9f * Pmax_cmH2O);
     }
-    else
-    {
+    else {
         P_cmH2O = (int)(0.9f * Pmax_cmH2O - sqrtf(cycle_pos * 2.f - 1.f) * (0.9f * Pmax_cmH2O - Pmin_cmH2O));
     }
 }
 
 void cycle_respiration()
 {
+    const float Pmax_cmH2O = get_setting_Pmax_cmH2O();
+    const float Tplat_ms   = respi_start_ms + get_setting_Tplat_ms  ();
+
     if (state_start_ms==-1) state_start_ms = get_time_ms();
     if (respi_start_ms==-1) respi_start_ms = get_time_ms();
 
     if (Insufflation == state) {
         respi_start_ms = get_time_ms();
         valve_inhale();
-        if (Pmax_cmH2O <= read_Paw_cmH2O()) {
+        if (read_Paw_cmH2O() >= Pmax_cmH2O) {
             enter_state(Exhalation);
         }
-        if (VT_mL <= Vol_mL) {
+        if (Vol_mL >= get_setting_VT_mL()) {
             enter_state(Plateau);
         }
         motor_press();
@@ -207,12 +206,12 @@ void cycle_respiration()
             enter_state(Insufflation);
             long t_ms = get_time_ms();
 
-            IE = (float)((state_start_ms-respi_start_ms))/(t_ms-state_start_ms);
-            FRs_pm = 1./((t_ms-respi_start_ms)/1000/60);
+            EoI_ratio = (float)(t_ms-state_start_ms)/(state_start_ms-respi_start_ms);
+            FR_pm = 1./((t_ms-respi_start_ms)/1000/60);
             VTe_mL = Vol_mL;
             // TODO ...
 
-            send_RESP(IE, FRs_pm, VTe_mL, VM_Lm, Pcrete_cmH2O, Pplat_cmH2O, PEP_cmH2O);
+            send_RESP(EoI_ratio, FR_pm, VTe_mL, VM_Lpm, Pcrete_cmH2O, Pplat_cmH2O, PEP_cmH2O);
         }
         motor_release();
     }

@@ -5,7 +5,7 @@
 #include <math.h>
 
 #include "configuration.h"
-#include "controller_settings.h"
+#include "ihm_communication.h"
 
 // ------------------------------------------------------------------------------------------------
 //! OS simulation
@@ -82,9 +82,6 @@ bool motor_press()
     motor_release_ms = -1;
     motor_dir = 1; // TODO simulate Vmax_Lpm limiting by determining the approriate speed/steps
     motor_pos = MIN(MOTOR_MAX, motor_pos+motor_dir); // TODO simulate lost steps in range
-    if (motor_pos/0xF) {
-        DEBUG_PRINTF("motor %X\n", motor_pos);
-    }
     return true; // TODO simulate driver failure
 }
 
@@ -100,9 +97,6 @@ bool motor_release()
     motor_release_ms = get_time_ms();
     motor_dir = -1;
     motor_pos = MAX(0, motor_pos+motor_dir); // TODO simulate lost steps in range
-    if (motor_pos/0xF) {
-        DEBUG_PRINTF("motor %X\n", motor_pos);
-    }
     return true; // TODO simulate driver failure
 }
 
@@ -180,6 +174,7 @@ float read_Paw_cmH2O()
 {
     static float Paw_cmH2O = 10; // to handle exponential decrease during plateau and exhalation
 
+    const float PEP_cmH2O = get_setting_PEP_cmH2O();
     if (valve_state == Inhale) {
         if (motor_dir > 0) {
             // Pressure augments as volume decreases according to PV=k ('loi des gaz parfait')

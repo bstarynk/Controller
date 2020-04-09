@@ -2,6 +2,7 @@
 
 #include <time.h>
 #include <stdio.h>
+#include <math.h>
 
 // ------------------------------------------------------------------------------------------------
 //! OS simulation
@@ -33,14 +34,9 @@ FILE *out;
 bool init_ihm(const char* pathInputFile, const char* pathOutputFile)
 {
     // TODO Replace with HAL_UART_init, no connection per se
-    if (pathInputFile)
-        in  = fopen(pathInputFile, "r");
-    else
-        in = stdin;
-    if (pathOutputFile)
-        out = fopen(pathOutputFile, "w");
-    else
-        out = stdout;
+    in  = pathInputFile  ? fopen(pathInputFile , "r") : stdin ;
+    out = pathOutputFile ? fopen(pathOutputFile, "w") : stdout;
+
     return true;
 }
 
@@ -64,4 +60,151 @@ int recv_ihm()
         return blocking_read;
     }
     return EOF;
+}
+
+// ------------------------------------------------------------------------------------------------
+//! HW actuators
+
+static int motor_pos = 0;
+static int motor_dir = 0;
+static long motor_release_ms = -1;
+
+bool motor_press()
+{
+    motor_release_ms = -1;
+    motor_dir = 1; // TODO simulate Vmax_Lpm limiting by determining the approriate speed/steps
+    motor_pos = MIN(MOTOR_MAX, motor_pos+motor_dir); // TODO simulate lost steps in range
+    if (motor_pos/0xF) {
+        DEBUG_PRINTF("motor %X\n", motor_pos);
+    }
+    return true; // TODO simulate driver failure
+}
+
+bool motor_stop()
+{
+    motor_release_ms = -1;
+    motor_dir = 0;
+    return true; // TODO simulate driver failure
+}
+
+bool motor_release()
+{
+    motor_release_ms = get_time_ms();
+    motor_dir = -1;
+    motor_pos = MAX(0, motor_pos+motor_dir); // TODO simulate lost steps in range
+    if (motor_pos/0xF) {
+        DEBUG_PRINTF("motor %X\n", motor_pos);
+    }
+    return true; // TODO simulate driver failure
+}
+
+bool motor_pep_move(int steps)
+{
+    return false; // TODO
+}
+
+static enum Valve { Inhale, Exhale } valve_state = Exhale;
+static long valve_exhale_ms = -1;
+
+bool valve_exhale()
+{
+    if (valve_state == Exhale) return true;
+
+    valve_state = Exhale;
+    valve_exhale_ms = get_time_ms();
+    return true;
+}
+
+bool valve_inhale()
+{
+    valve_state = Inhale;
+    valve_exhale_ms = -1;
+    return true;
+}
+
+bool light_yellow(enum OnOff new)
+{
+    return true; // TODO
+}
+
+bool light_red(enum OnOff new)
+{
+    return true; // TODO
+}
+
+bool buzzer(enum OnOff new)
+{
+    return true; // TODO
+}
+
+//! Usable BAVU volume based on motor position
+//! \remark BAVU deformation/elasticity is simulated with a cos to easily derive Q
+float BAVU_V_mL()
+{
+    return cosf(M_PI_2*(motor_pos/MOTOR_MAX)) * BAVU_V_ML_MAX; // TODO simulate BAVU perforation
+}
+
+//! Usable BAVU flow based on motor position and direction
+//! \remark a valve normally ensures that Q is always positive
+float BAVU_Q_Lpm()
+{
+    const float Q_Lpm = SIGN(motor_dir) * sinf(M_PI_2*((float)(motor_pos)/MOTOR_MAX)) * BAVU_Q_LPM_MAX; // TODO simulate BAVU perforation
+    return Q_Lpm * (motor_dir > 0 ? 1. : BAVU_VALVE_RATIO);
+}
+
+// ------------------------------------------------------------------------------------------------
+//! HW sensors simulation
+
+float read_Pdiff_Lpm()
+{
+    static float abs_Q_Lpm = 10; // to handle exponential decrease during exhalation
+
+    if (valve_state == Inhale) {
+        abs_Q_Lpm = BAVU_Q_Lpm() * EXHAL_VALVE_RATIO;
+        return abs_Q_Lpm;
+    }
+    else if (valve_state == Exhale) {
+        const float decrease = .9; // ~ <1% after 500ms @ 20 FPS
+        abs_Q_Lpm *= decrease;
+        return -abs_Q_Lpm;
+    }
+    else {
+        return 0.;
+    }
+}
+
+float read_Paw_cmH2O()
+{
+    static float Paw_cmH2O = 10; // to handle exponential decrease during plateau and exhalation
+
+    if (valve_state == Inhale) {
+        if (motor_dir > 0) {
+            // Pressure augments proportionally as volume decreases according to PV=k ('loi des gaz parfait'): Pi=P0*V0/Vi
+            // TODO Add pressure needed to counter gazes resistance
+            // See https://www.researchgate.net/publication/318466995_The_future_of_mechanical_ventilation_Lessons_from_the_present_and_the_past
+            Paw_cmH2O = PEP_cmH2O + (BAVU_V_ML_MAX + LUNG_V_ML_MAX)/(BAVU_V_mL() + LUNG_V_ML_MAX);
+        }
+        else {
+            // Pressure exp. decreases due to lung compliance (volume augmentation) which depends on patient (and condition)
+            const float decrease = .6; // ~ <1% after 50ms
+            const float Pplat_cmH2O = PEP_cmH2O + (BAVU_V_ML_MAX - BAVU_V_mL()) / LUNG_COMPLIANCE;
+            Paw_cmH2O = Pplat_cmH2O
+                        + (Paw_cmH2O-Pplat_cmH2O) * decrease;
+        }
+    }
+    else if (valve_state == Exhale) {
+        const float decrease = .9; // ~ <1% after 500ms
+        Paw_cmH2O = PEP_cmH2O + (Paw_cmH2O-PEP_cmH2O) * decrease;
+    }
+    return Paw_cmH2O;
+}
+
+float read_Patmo_mbar()
+{
+    return 1013. + sinf(2*M_PI*get_time_ms()/1000/60) * PATMO_VARIATION_MBAR; // TODO test failure
+}
+
+int read_Battery_level()
+{
+    return 2; // TODO simulate lower battery levels
 }
