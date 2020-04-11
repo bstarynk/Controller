@@ -7,8 +7,10 @@ add_library(lowlevel STATIC
     stm32f3xx_it.c
 
     hardware_simulation.c
+    hardware_real.c
     hardware_serial.c
     simple_indicators.c
+    i2c.c
 )
 
 target_include_directories(lowlevel PUBLIC ${LOWLEVEL_INC_DIR})

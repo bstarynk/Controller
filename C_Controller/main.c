@@ -17,6 +17,7 @@
 #include "controller.h"
 #include "ihm_communication.h"
 #include "lowlevel/include/lowlevel.h"
+#include "lowlevel/include/hardware_real.h"
 #ifndef WIN32
 #include "tasks_recovid.h"
 #include "TaskSensing.h"
@@ -46,6 +47,7 @@ int main(int argc, const char** argv)
     UNUSED(argv)
 
     init_ihm(IHM_MODE_SERIAL, 0, 0);
+    init_hardware();
 #endif
 
     int self_tests_result = self_tests();
