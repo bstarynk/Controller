@@ -139,10 +139,28 @@ int compute_checksum(uint8_t data[3])
 
 float read_Pdiff_Lpm()
 {
+	int cool = 0;
 	uint8_t data[3];
-	i2c_read_data(SDP6_ADDR, data, 3);
-	compute_checksum(data);
+	uint8_t cmd_read  = 0xF1;
+	uint8_t cmd_reset = 0xFE;
+	int ret_write = i2c_write_data(SDP6_ADDR, &cmd_read, 1);
+	int ret_read = i2c_read_data(SDP6_ADDR, data, 3);
+	if(compute_checksum(data) && ret_write == HAL_OK && ret_read) 
+	{
+		cool=1;
+	}
+	else {
+		cool=2;
+	}
+	for(cool; cool > 0; cool--)
+	{
+	  led_onnucleo_set(1);
+	  HAL_Delay(200);
+	  led_onnucleo_set(0);
+    printf("Ret write %d ret_read %d \n",ret_write, ret_write);
+	}
 	int data_int = data[0] << 8 | data[1];
+
 	float data_f =  ( (float) data_int / SDP68SCALE_FACTOR_PA) * PA_TO_cmH2O; //0.0101972
 	return data_f;
 }
