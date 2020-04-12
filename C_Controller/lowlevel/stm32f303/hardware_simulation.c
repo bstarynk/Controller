@@ -104,10 +104,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 bool init_ihm(ihm_mode_t ihm_mode, const char* pathInputFile, const char* pathOutputFile)
 {
     (void) ihm_mode; (void) pathInputFile; (void) pathOutputFile;
-    HAL_Init();
-
-    SystemClock_Config();
-
     return hardware_serial_init(NULL);
 }
 
@@ -214,30 +210,7 @@ float BAVU_Q_Lpm()
 
 
 
-float read_Paw_cmH2O()
-{
-    static float Paw_cmH2O = 10; // to handle exponential decrease during plateau and exhalation
-    // const float PEP_cmH2O = get_setting_PEP_cmH2O();
 
-    if (valve_state == Inhale) {
-        if (motor_dir > 0) {
-            // Pressure augments as volume decreases according to PV=k ('loi des gaz parfait')
-            // Pi=P0*V0/Vi
-            Paw_cmH2O = get_setting_PEP_cmH2O() + (4 * (BAVU_V_ML_MAX + LUNG_V_ML_MAX)/(BAVU_V_mL() + LUNG_V_ML_MAX));
-        }
-        else {
-            // Pressure exp. decreases due to lung compliance (volume augmentation) which depends on patient (and condition)
-            const float decrease = .6; // expf(- abs(get_time_ms()-motor_release_ms)/10.); // <1% after 50ms
-            const float Pplat_cmH2O = get_setting_PEP_cmH2O() + (BAVU_V_ML_MAX - BAVU_V_mL()) / LUNG_COMPLIANCE;
-            Paw_cmH2O = Pplat_cmH2O + (Paw_cmH2O-Pplat_cmH2O) * decrease;
-        }
-    }
-    else if (valve_state == Exhale) {
-        const float decrease = .9; // abs(get_time_ms()-valve_exhale_ms)/100.; // <1% after 500ms
-        Paw_cmH2O = get_setting_PEP_cmH2O() + (Paw_cmH2O-get_setting_PEP_cmH2O()) * decrease;
-    }
-    return Paw_cmH2O;
-}
 
 float read_Patmo_mbar()
 {

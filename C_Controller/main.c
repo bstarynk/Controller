@@ -46,8 +46,8 @@ int main(int argc, const char** argv)
     UNUSED(argc)
     UNUSED(argv)
 
-    init_ihm(IHM_MODE_SERIAL, 0, 0);
     init_hardware();
+    init_ihm(IHM_MODE_SERIAL, 0, 0);
 #endif
 
     int self_tests_result = self_tests();

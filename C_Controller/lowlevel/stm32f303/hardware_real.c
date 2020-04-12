@@ -3,6 +3,8 @@
 
 int init_hardware()
 {
-	leds_init();
+    HAL_Init();
+    SystemClock_Config();
+	init_indicators();
 	return i2c_init();
 }
