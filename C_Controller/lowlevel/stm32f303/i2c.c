@@ -114,10 +114,29 @@ int i2c_init()
 	return MX_I2C1_Init();
 }
 
+
+uint8_t crc8(const uint8_t *addr, uint8_t len)
+{
+	uint8_t crc = 0;
+
+	while (len--) {
+		uint8_t inbyte = *addr++;
+		for (uint8_t i = 8; i; i--) {
+			uint8_t mix = (crc ^ inbyte) & 0x01;
+			crc >>= 1;
+			if (mix) crc ^= 0x8C;
+			inbyte >>= 1;
+		}
+	}
+	return crc;
+}
+
 int compute_checksum(uint8_t data[3])
 {
-	return 0;
+	uint8_t crc_computed =  crc8(data, 2);
+	return crc_computed == data[3];
 }
+
 float read_Pdiff_Lpm()
 {
 	uint8_t data[3];
