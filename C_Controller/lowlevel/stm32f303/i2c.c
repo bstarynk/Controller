@@ -60,7 +60,7 @@ static ifl_hal_i2c_result_t MX_I2C1_Init(void)
 	  led_onnucleo_set(0);
 	  HAL_Delay(200);
   }
-  HAL_Delay(2000);
+  HAL_Delay(500);
 
   if (HAL_OK == HAL_I2C_IsDeviceReady(&hi2c1, HSCMRNN001PG2A3_ADDR, 10, 10))
   {
@@ -73,7 +73,7 @@ static ifl_hal_i2c_result_t MX_I2C1_Init(void)
 	  led_onnucleo_set(0);
 	  HAL_Delay(200);
   }
-  HAL_Delay(2000);
+  HAL_Delay(500);
 
   if (HAL_OK == HAL_I2C_IsDeviceReady(&hi2c1, BMP280_ADDR, 10, 10))
   {
@@ -90,7 +90,7 @@ static ifl_hal_i2c_result_t MX_I2C1_Init(void)
 	  led_onnucleo_set(0);
 	  HAL_Delay(200);
   }
-  HAL_Delay(2000);
+  HAL_Delay(500);
 
 
   return ifl_hal_i2c_success;
