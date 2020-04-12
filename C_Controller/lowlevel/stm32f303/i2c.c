@@ -7,6 +7,7 @@ I2C_HandleTypeDef hi2c1;
 
 static const uint8_t BMP280_ADDR = 0xec;
 static const uint8_t HSCMRNN001PG2A3_ADDR = 0x28 << 1;  // Datasheet is not 8bit adress !
+static const uint8_t HSCMRNN160MG6A3_ADDR = 0x68 << 1;  // Datasheet is not 8bit adress !
 static const uint8_t SDP6_ADDR = 0x80;
 static const int 	 SDP68SCALE_FACTOR_PA = 60;
 static const float 	 PA_TO_cmH2O = 0.0101972;
