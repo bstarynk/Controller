@@ -33,25 +33,52 @@
 #define UART_RX_DMA_BUFFER_SIZE         (512)
 
 #define UART_COM_IHM                    	(0)
-
-#define UART_COM_IHM_INSTANCE 		 		USART2
-#define UART_COM_IHM_IRQ					USART2_IRQn
-#define UART_COM_IHM_IRQHandler 			USART2_IRQHandler
-#define UART_COM_IHM_CLK_ENABLE			    __HAL_RCC_USART2_CLK_ENABLE
-
-#define UART_COM_IHM_DMA_ENABLE 			__HAL_RCC_DMA1_CLK_ENABLE
-#define UART_COM_IHM_DMA_CHANNEL_TX 		DMA1_Channel7
-#define UART_COM_IHM_DMA_CHANNEL_TX_IRQ		DMA1_Channel7_IRQn
-#define UART_COM_IHM_DMA_CHANNEL_TX_IRQHandler DMA1_Channel7_IRQHandler
-#define UART_COM_IHM_DMA_CHANNEL_RX 		DMA1_Channel6
-#define UART_COM_IHM_DMA_CHANNEL_RX_IRQ		DMA1_Channel6_IRQn
-#define UART_COM_IHM_DMA_CHANNEL_RX_IRQHandler DMA1_Channel6_IRQHandler
-
-#define UART_COM_IHM_GPIO_BANK				GPIOA
-#define UART_COM_IHM_ALTERNATE 				GPIO_AF7_USART2;
-#define UART_COM_IHM_PIN					GPIO_PIN_2|GPIO_PIN_3;
-#define UART_COM_IHM_GPIO_CLK_ENABLE		__HAL_RCC_GPIOA_CLK_ENABLE
 #define UART_ID_MAX                     	(1)
+
+
+#define RASPI_CONNECTION
+
+#ifndef RASPI_CONNECTION
+
+#define UART_COM_IHM_INSTANCE 		 			USART2
+#define UART_COM_IHM_IRQ						USART2_IRQn
+#define UART_COM_IHM_IRQHandler 				USART2_IRQHandler
+#define UART_COM_IHM_CLK_ENABLE			    	__HAL_RCC_USART2_CLK_ENABLE
+
+#define UART_COM_IHM_DMA_ENABLE 				__HAL_RCC_DMA1_CLK_ENABLE
+#define UART_COM_IHM_DMA_CHANNEL_TX 			DMA1_Channel7
+#define UART_COM_IHM_DMA_CHANNEL_TX_IRQ			DMA1_Channel7_IRQn
+#define UART_COM_IHM_DMA_CHANNEL_TX_IRQHandler 	DMA1_Channel7_IRQHandler
+#define UART_COM_IHM_DMA_CHANNEL_RX 			DMA1_Channel6
+#define UART_COM_IHM_DMA_CHANNEL_RX_IRQ			DMA1_Channel6_IRQn
+#define UART_COM_IHM_DMA_CHANNEL_RX_IRQHandler 	DMA1_Channel6_IRQHandler
+
+#define UART_COM_IHM_GPIO_BANK					GPIOA
+#define UART_COM_IHM_ALTERNATE 					GPIO_AF7_USART2
+#define UART_COM_IHM_PIN						GPIO_PIN_2|GPIO_PIN_3
+#define UART_COM_IHM_GPIO_CLK_ENABLE			__HAL_RCC_GPIOA_CLK_ENABLE
+
+
+#else
+
+#define UART_COM_IHM_INSTANCE 		 			UART4
+#define UART_COM_IHM_IRQ						UART4_IRQn
+#define UART_COM_IHM_IRQHandler 				UART4_IRQHandler
+#define UART_COM_IHM_CLK_ENABLE			    	__HAL_RCC_UART4_CLK_ENABLE
+
+#define UART_COM_IHM_DMA_ENABLE 				__HAL_RCC_DMA2_CLK_ENABLE
+#define UART_COM_IHM_DMA_CHANNEL_TX 			DMA2_Channel5
+#define UART_COM_IHM_DMA_CHANNEL_TX_IRQ			DMA2_Channel5_IRQn
+#define UART_COM_IHM_DMA_CHANNEL_TX_IRQHandler 	DMA2_Channel5_IRQHandler
+#define UART_COM_IHM_DMA_CHANNEL_RX 			DMA2_Channel3
+#define UART_COM_IHM_DMA_CHANNEL_RX_IRQ			DMA2_Channel3_IRQn
+#define UART_COM_IHM_DMA_CHANNEL_RX_IRQHandler 	DMA2_Channel3_IRQHandler
+
+#define UART_COM_IHM_GPIO_BANK					GPIOC
+#define UART_COM_IHM_ALTERNATE 					GPIO_AF5_UART4
+#define UART_COM_IHM_PIN						GPIO_PIN_10|GPIO_PIN_11
+#define UART_COM_IHM_GPIO_CLK_ENABLE			__HAL_RCC_GPIOC_CLK_ENABLE
+#endif
 
 // --------------------------------------------------------------------------------------------------------------------
 // ----- local function macros
