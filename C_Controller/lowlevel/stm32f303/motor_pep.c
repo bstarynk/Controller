@@ -1,13 +1,15 @@
 #include <FreeRTOS.h>
+#include <stdint.h>
 #include <task.h>
 
 #include "recovid_revB.h"
 #include "lowlevel.h"
+#include "stm32f3xx_hal_tim.h"
 #include <math.h>
 
 static TIM_HandleTypeDef* _motor_tim = NULL;
 
-static void step_callback(TIM_HandleTypeDef *tim);
+void step_callback(TIM_HandleTypeDef *tim);
 
 static volatile uint32_t _remaining_steps;
 static volatile bool _moving;
@@ -24,6 +26,11 @@ static void set_stepping(step_mode_t m0, step_mode_t m1);
 static void set_direction(GPIO_PinState dir);
 static void set_enable(bool ena);
 
+uint32_t get_remaining_steps()
+{
+	return _remaining_steps;
+}
+
 bool init_motor_pep()
 {
   if(_motor_tim==NULL) {
@@ -33,7 +40,6 @@ bool init_motor_pep()
 
     // Enable the PWM channel
     TIM_CCxChannelCmd(_motor_tim->Instance, PEP_TIM_CHANNEL, TIM_CCx_ENABLE);
-
     // microstepping 8
     set_stepping(ZERO,ONE);
     // Set indexer mode
@@ -50,8 +56,29 @@ bool is_motor_pep_ok() {
   return _motor_tim!=NULL;
 }
 
+
+bool motor_pep_stop() {
+  if(_motor_tim==NULL) return false;
+  HAL_TIM_Base_Stop_IT(_motor_tim);
+  _homing=false;
+  _remaining_steps=0;
+  return true;
+}
+
+bool motor_pep_move_steps(int steps) {
+  if(_motor_tim==NULL) return false;
+  _remaining_steps = steps;
+  _motor_tim->Instance->ARR= (uint16_t)(1000000.0/(PEP_MAX_SPEED*PEP_STEPS_PER_MM));
+  set_direction(steps<0?PEP_DIR_DEC:PEP_DIR_INC);
+  HAL_TIM_Base_Start_IT(_motor_tim);
+  
+  return true;
+}
+
+
 bool motor_pep_move(float relative_move_cmH2O) {
   if(_motor_tim==NULL) return false;
+  motor_pep_stop();
   if(relative_move_cmH2O!=0) {
     _remaining_steps = (uint32_t) fabs(relative_move_cmH2O)* 10 * PEP_STEPS_PER_MM;
     _motor_tim->Instance->ARR= (uint16_t)(1000000.0/(PEP_MAX_SPEED*PEP_STEPS_PER_MM));
@@ -66,19 +93,11 @@ bool motor_pep_home() {
 
   set_direction(PEP_DIR_DEC);
   set_enable(true);
-  _motor_tim->Instance->ARR= (uint16_t)(1000000/(PEP_MAX_SPEED*PEP_STEPS_PER_MM));
+  _motor_tim->Instance->ARR= (uint16_t)(1000000.0/(PEP_MAX_SPEED*PEP_STEPS_PER_MM));
   _homing=true;
   HAL_TIM_Base_Start_IT(_motor_tim);
 
-  while(!_home) vTaskDelay(10/portTICK_PERIOD_MS);
-  return true;
-}
-
-bool motor_pep_stop() {
-  if(_motor_tim==NULL) return false;
-  HAL_TIM_Base_Stop_IT(_motor_tim);
-  _homing=false;
-  _remaining_steps=0;
+  while(!_home) delay(10/portTICK_PERIOD_MS);
   return true;
 }
 
@@ -89,7 +108,8 @@ void pep_home_irq() {
   uint32_t time= HAL_GetTick();
   if(time-last_time>20) {
     _home= !HAL_GPIO_ReadPin(PEP_HOME_GPIO_Port, PEP_HOME_Pin);
-    if(_home && _homing) {
+    if(_home) {
+	  light_yellow(On);
       motor_pep_stop();
     }
   }
@@ -101,12 +121,15 @@ void pep_nfault_irq() {
   // TODO
 }
 
-static void step_callback(TIM_HandleTypeDef *tim) {
-  if(_homing) return;
+void step_callback(TIM_HandleTypeDef *tim) {
+  static uint32_t last_time=0;
+  static bool jour=true;
+  uint32_t time= HAL_GetTick();
   if(_remaining_steps==0) {
-    motor_pep_stop();
+	  motor_pep_stop();
   }
   --_remaining_steps;
+  last_time=time;
 }
 
 

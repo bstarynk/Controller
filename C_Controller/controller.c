@@ -119,6 +119,22 @@ int self_tests()
     check(&test_bits, 3, init_valve());
     check(&test_bits, 3, valve_exhale());
 
+	init_motor_pep();
+	motor_pep_move_steps(160);
+	while(1){
+			light_red(On);
+			delay(400);
+			light_red(Off);
+			delay(400);
+	}
+//
+//    	if(read_pep()) {
+//			light_red(On);
+//		}
+//		else {
+//			light_red(Off);
+//		}
+
     check(&test_bits, 4, init_motor());
     printf("Exhale  Pdiff  Lpm:%+.1g\n", read_Pdiff_Lpm());
     check(&test_bits, 4, motor_release());
