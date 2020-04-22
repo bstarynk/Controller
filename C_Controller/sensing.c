@@ -22,8 +22,8 @@ static float VMe_Lpm      = 0.f;
 
 static uint32_t last_sense_ms = 0;
 
-static uint16_t steps_t_us[MOTOR_MAX];
-
+uint16_t steps_t_us[MOTOR_MAX];
+uint16_t last_step = 0;
 // Updated by sensors.c
 
 static float current_VolM_Lpm = 0.f;
@@ -31,8 +31,8 @@ static float current_P_cmH2O  = 0.f;
 static float current_Vol_mL   = 0.f;
 
 static volatile uint16_t raw_P     = 0.f;
-static volatile uint16_t raw_VolM  = 0.f;
-static volatile uint16_t raw_dt_ms = 0.f;
+static volatile int16_t raw_VolM  = 0.f;
+static volatile uint32_t raw_dt_ms = 0.f;
 
 static volatile float    samples_Q_t_ms  = 0.f;
 static volatile uint16_t samples_Q_index = 0;
@@ -116,7 +116,8 @@ void compute_corrected_flow_volume()
         temp_Debit_calcul = current_flow_uncorrected * 0.87f;       // V2 Calibration
     }
 
-    current_VolM_Lpm = temp_Debit_calcul + delta_flow * raw_dt_ms * fact_erreur;
+//    current_VolM_Lpm = temp_Debit_calcul + delta_flow * raw_dt_ms * fact_erreur;
+    current_VolM_Lpm = current_flow_uncorrected;
     current_Vol_mL  += (current_VolM_Lpm/60.f/*mLpms*/) * raw_dt_ms;
 }
 
@@ -129,13 +130,13 @@ bool sensors_start_sampling_flow()
     return sampling_Q;
 }
 
-bool sensors_sample_flow(uint32_t dt_us)
+bool sensors_sample_flow(uint32_t dt_ms)
 {
     if (!sampling_Q) return false;
 
     for (uint16_t i=0 ; i<COUNT_OF(samples_Q_Lps); i++) {
-        samples_Q_Lps[i] = current_VolM_Lpm;
-        samples_Q_t_ms  += dt_us;
+        samples_Q_Lps[i] = current_VolM_Lpm / 60.0f;
+        samples_Q_t_ms  += dt_ms;
         samples_Q_index ++;
     }
     return true;
@@ -218,12 +219,15 @@ uint32_t compute_motor_steps_and_Tinsu_ms(float flow_Lps, float vol_mL)
         const float correction = (flow_Lps / actual_vs_desired);
         const float new_step_t_us = MAX(MOTOR_STEP_TIME_US_MIN, ((float)steps_t_us[i]) / correction);
         const float vol = Tinsu_us/1000/*ms*/ * flow_Lps;
-        if (vol > 1.1f * vol_mL) { // actual Q will almost always be lower than desired
+        if (vol > 1.0f * vol_mL) { // actual Q will almost always be lower than desired TODO +10% 
             steps_t_us[i] = UINT16_MAX; // slowest motion
         }
         else {
             Tinsu_us += new_step_t_us;
             steps_t_us[i] = new_step_t_us;
+			if(steps_t_us > 400) {
+				light_red(On);
+			}
 #ifndef NTESTS
             DEBUG_PRINTF("t_us=%f steps_t_us=%d vol=%f", Tinsu_us, steps_t_us[i], vol);
 #endif
@@ -251,7 +255,9 @@ void sense_and_compute(RespirationState state)
         if (last_state==Exhalation || last_state==ExhalationPause) {
             VTi_mL       = 0.f;
             Pcrete_cmH2O = 0.f;
+			light_green(On);
             sensors_start_sampling_flow();
+			light_green(Off);
         }
         else {
             VTi_mL = get_sensed_Vol_mL();
@@ -260,7 +266,6 @@ void sense_and_compute(RespirationState state)
         if (state==Plateau) {
             if (last_state==Insufflation) {
                 sensors_stop_sampling_flow();
-                //compute_motor_steps_and_Tinsu_ms(get_setting_Vmax_Lpm()/60.f, get_setting_VT_mL());
                 Pplat_cmH2O = Pcrete_cmH2O;
             }
             else {
@@ -273,6 +278,10 @@ void sense_and_compute(RespirationState state)
         if (last_state==Insufflation || last_state==Plateau) {
             VTe_mL = 0.f;
             PEP_cmH2O = 0.f;
+			light_red(On);
+            sensors_stop_sampling_flow();
+            last_step = compute_motor_steps_and_Tinsu_ms(get_setting_Vmax_Lpm()/60.f, get_setting_VT_mL());
+			light_red(Off);
         }
         else {
             VTe_mL    = get_sensed_Vol_mL();
@@ -281,7 +290,7 @@ void sense_and_compute(RespirationState state)
         Vol_mL = VTi_mL+VTe_mL;
     }
 
-    if (send_DATA(get_sensed_P_cmH2O(), get_sensed_VolM_Lpm(), Vol_mL)) { // TODO send_DATA_X
+    if (send_DATA(get_sensed_P_cmH2O(), get_sensed_VolM_Lpm(), get_sensed_Vol_mL())) { // TODO send_DATA_X
         sent_DATA_ms = get_time_ms();
     }
 

@@ -266,7 +266,12 @@ void cycle_respiration()
 
         // Start Inhalation
         valve_inhale();
-        motor_press_constant(200, 2000); // TODO compute_motor_steps_and_Tinsu_ms(VM, VT); // RCM motor_pos > pos(V)+10% in case Pdiff understimates VT
+		if(last_step != 0) {
+        	motor_press(steps_t_us, last_step); // TODO compute_motor_steps_and_Tinsu_ms(VM, VT); // RCM motor_pos > pos(V)+10% in case Pdiff understimates VT
+		}
+		else {
+        	motor_press_constant(200, 2000); 
+		}
         while(Insufflation == current_respiration_state() ) {
             // // if (Pmax <= get_sensed_P_cmH2O()) {
             // //     light_yellow(On);
@@ -282,6 +287,7 @@ void cycle_respiration()
 		light_green(Off);
 			};*/
 
+    		sense_and_compute(current_respiration_state());
 	        if( get_time_ms()  >= ( (800U) + respi_start_ms ) ) {
 	            enter_state(Plateau);
 				break;
@@ -293,6 +299,7 @@ void cycle_respiration()
             // if (Pmax <= get_sensed_P_cmH2O()) { // TODO check Tpins_ms < first_pause_ms+5000
             //     enter_state(Exhalation);
             // } else
+    		sense_and_compute(current_respiration_state());
             if ( (state_start_ms + MAX(Tplat,Tpins_ms)) <= get_time_ms() )  { // TODO check Tpins_ms < first_pause_ms+5000
                 enter_state(Exhalation);
 				break;
@@ -301,6 +308,7 @@ void cycle_respiration()
         }        
         valve_exhale();
         while(Exhalation == current_respiration_state()) {
+    		sense_and_compute(current_respiration_state());
 			if ((respi_start_ms + MAX(T,Tpexp_ms)) <= get_time_ms()) { // TODO check Tpexp_ms < first_pause_ms+5000
 				uint32_t t_ms = get_time_ms();
 
