@@ -259,7 +259,7 @@ void enter_state(RespirationState new)
             motor_press(steps_t_us, last_step); 
 		}
 		else {
-			motor_press_constant(MOTOR_STEP_TIME_US_MIN, 3800);
+			motor_press_constant(MOTOR_STEP_TIME_US_MIN*3, 3800);
 		}
         respi_start_ms = get_time_ms();
     }
@@ -328,7 +328,7 @@ void cycle_respiration()
         VTi_mL = get_sensed_Vol_mL();
         Pcrete_cmH2O = MAX(Pcrete_cmH2O, get_sensed_P_cmH2O()); // TODO check specs
 
-		if( get_time_ms()  >= ( (800U) + respi_start_ms ) ) {
+		if( get_time_ms()  >= ( (1500U) + respi_start_ms ) ) {
 	            enter_state(Plateau);
 		};
     }
