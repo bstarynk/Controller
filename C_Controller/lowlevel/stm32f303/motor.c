@@ -207,18 +207,18 @@ uint32_t compute_motor_steps_and_Tinsu_ms(float desired_flow_Lps, float vol_mL);
 
 void test_motor() 
 {		
-	sensors_start()
+	sensors_start();
 	sensors_start_sampling_flow();
-	//motor_press_constant(MOTOR_STEP_TIME_US_MIN, 3000);
-	wait(3000);
+	motor_press_constant(MOTOR_STEP_TIME_US_MIN, 3000);
+	wait_ms(3000);
 	sensors_stop_sampling_flow();
 	print_samples(samples_Q_Lps, SAMPLING_SIZE);
-	wait(3000);
+	wait_ms(3000);
 	int nb_steps = compute_motor_steps_and_Tinsu_ms(1,  400);
 	print_steps(steps_t_us, MOTOR_MAX);
-	wait(3000);
+	wait_ms(3000);
 	sensors_start_sampling_flow();
 	motor_press(steps_t_us, nb_steps);
 	sensors_stop_sampling_flow();
-	wait(3000);
+	wait_ms(3000);
 }
