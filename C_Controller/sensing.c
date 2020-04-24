@@ -157,6 +157,7 @@ bool sensors_sample_flow(int16_t read, uint32_t dt_ms)
     return true;
 }
 #else
+#error
 bool sensors_sample_flow(int16_t read, uint32_t dt_ms)
 {
     UNUSED(read); //TODO read values

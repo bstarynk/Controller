@@ -160,7 +160,7 @@ static void process_i2c_callback(I2C_HandleTypeDef *hi2c) {
 		}
 		if(_sdp_measurement_buffer[0] != 0xFF || _sdp_measurement_buffer[1] != 0xFF || _sdp_measurement_buffer[2] != 0xFF){
             const uint32_t  t_ms = get_time_ms();
-			if(last_sdp_t_ms < t_ms+ (SAMPLES_T_US/1000)) {
+			if(last_sdp_t_ms < t_ms + (SAMPLES_T_US/1000)) {
 				light_yellow(On);
 				const uint32_t dt_ms = t_ms - last_sdp_t_ms;
 				last_sdp_t_ms = t_ms;
