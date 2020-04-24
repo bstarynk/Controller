@@ -207,6 +207,7 @@ uint32_t compute_motor_steps_and_Tinsu_ms(float desired_flow_Lps, float vol_mL);
 
 void test_motor() 
 {		
+	sensors_start()
 	sensors_start_sampling_flow();
 	//motor_press_constant(MOTOR_STEP_TIME_US_MIN, 3000);
 	wait(3000);
