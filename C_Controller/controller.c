@@ -118,15 +118,15 @@ int self_tests()
     motor_release();
     wait_ms(3000);
 
-	light_green(On);
-	valve_inhale();
-	motor_press_constant(MOTOR_STEP_TIME_US_MIN, 3800);
-	wait_ms(1000);
-	motor_stop();
-	valve_exhale();
-	motor_release();
-	light_green(Off);
-	wait_ms(3000);
+	//light_green(On);
+	//valve_inhale();
+	//motor_press_constant(MOTOR_STEP_TIME_US_MIN, 3800);
+	//wait_ms(1000);
+	//motor_stop();
+	//valve_exhale();
+	//motor_release();
+	//light_green(Off);
+	//wait_ms(3000);
 
 
     //printf("Press   Pdiff  Lpm:%+.1g\n", get_sensed_VolM_Lpm());
@@ -140,7 +140,9 @@ int self_tests()
     motor_pep_move(10);
     // TODO check(&test_bits, 8, motor_pep_...
     wait_ms(10000);*/
-
+	while(true) {
+		test_motor();
+	}
     return test_bits;
 }
 
@@ -279,7 +281,7 @@ void enter_state(RespirationState new)
         motor_release();
 		VMe_Lpm = 0.f;
 		PEP_cmH2O = 0.f;
-		//last_step = compute_motor_steps_and_Tinsu_ms(get_setting_Vmax_Lpm()/60.f, get_setting_VT_mL());
+		last_step = compute_motor_steps_and_Tinsu_ms(get_setting_Vmax_Lpm()/60.f, get_setting_VT_mL());
 	}
 	else if(state==ExhalationPause) {
         valve_inhale();
