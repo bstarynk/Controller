@@ -209,6 +209,7 @@ void test_motor()
 {		
 	sensors_start_sampling_flow();
 	motor_press_constant(MOTOR_STEP_TIME_US_MIN, 3000);
+	wait(3000);
 	sensors_stop_sampling_flow();
 	print_samples(samples_Q_Lps, SAMPLING_SIZE);
 	wait(3000);
